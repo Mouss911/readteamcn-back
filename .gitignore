@@ -1,0 +1,15 @@
+.env
+.venv
+/venv
+/media
+/static
+static
+media
+.env.prod
+
+/mediafiles
+mediafiles
+
+__pycache__/
+*.pyc
+.qodo
