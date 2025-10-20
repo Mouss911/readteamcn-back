@@ -37,9 +37,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'redteamcndev',
-    'redteamcnadmin',
-    'redteamcncoach',
+    'rest_framework',   # <-- ajouté : Django REST Framework
+    'dashboards',       # <-- ajouté : app dashboards
+    # ajoutez ici les autres apps que vous créerez :
+    # 'accounts',
+    # 'catalog',
+    # 'reviews',
+    # 'tokens',
+    # 'notifications',
+    # 'kpi',
+    # 'audit',
+    # 'plugins',
 ]
 
 MIDDLEWARE = [
