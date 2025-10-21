@@ -1,2 +1,3 @@
-# Component, ComponentVersion, Block, BlockVersion, FeaturePack, FeaturePackVersion, AdapterArtifact
+from django.db import models
 
+# Create your models here.

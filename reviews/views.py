@@ -1,2 +1,3 @@
-# soumettre, approuver, rejeter, publier
+from django.shortcuts import render
 
+# Create your views here.

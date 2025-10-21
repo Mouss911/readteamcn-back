@@ -37,18 +37,67 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',   # <-- ajouté : Django REST Framework
-    'dashboards',       # <-- ajouté : app dashboards
+    'django.contrib.sites',  # Pour allauth
+    'rest_framework',
+
+    # Third party
+    'rest_framework',
+    'rest_framework_simplejwt',      #  JWT AUTH
+    'drf_spectacular',               #  OPENAPI
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'django_otp',
+    'axes',
+    'corsheaders',
+    'anymail',
+    'filter',
+    'channels',
+    'celery',
+
     # ajoutez ici les autres apps que vous créerez :
-    # 'accounts',
-    # 'catalog',
-    # 'reviews',
-    # 'tokens',
-    # 'notifications',
-    # 'kpi',
-    # 'audit',
-    # 'plugins',
+    'users',
+    'catalog',
+    'reviews',
+    'tokens',
+    'notifications',
+    'kpi',
+    'audit',
+    'dashboards',
+    'plugins',
 ]
+
+# REST Framework configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+# SimpleJWT configuration
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+}
+
+# Spectacular (OpenAPI)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'RedTeamCN API',
+    'DESCRIPTION': 'Plateforme de design system',
+    'VERSION': '1.0.0',
+}
+
+# Allauth
+SITE_ID = 1
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

@@ -1,1 +1,3 @@
-# notifications, marquer lue
+from django.shortcuts import render
+
+# Create your views here.

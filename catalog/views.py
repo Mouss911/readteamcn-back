@@ -1,2 +1,3 @@
-# components, blocks, feature-packs
+from django.shortcuts import render
 
+# Create your views here.
