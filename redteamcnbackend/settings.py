@@ -67,7 +67,10 @@ INSTALLED_APPS = [
     'plugins',
 ]
 
-# REST Framework configuration
+# SITE_ID pour allauth
+SITE_ID = 1
+
+# REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -80,7 +83,7 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
-# SimpleJWT configuration
+# SimpleJWT
 from datetime import timedelta
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
@@ -95,11 +98,19 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Allauth
-SITE_ID = 1
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
 
+# CORS
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+# Middleware (ajoutez CORS en haut)
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
