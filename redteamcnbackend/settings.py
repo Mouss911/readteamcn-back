@@ -40,18 +40,67 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'redteamcndev',
-    'redteamcnadmin',
-    'redteamcncoach',
-    'drf_spectacular',
-    # 'dj_rest_auth',
-    # 'django.contrib.sites',
-    # 'allauth',
-    # 'allauth.account',
-    # 'allauth.socialaccount',
-    # 'rest_framework.authtoken'
-    'rest_framework'
+    'django.contrib.sites',  # Pour allauth
+    'rest_framework',
+
+    # Third party
+    'rest_framework',
+    'rest_framework_simplejwt',      #  JWT AUTH
+    'drf_spectacular',               #  OPENAPI
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'django_otp',
+    'axes',
+    'corsheaders',
+    'anymail',
+    'filter',
+    'channels',
+    'celery',
+
+    # ajoutez ici les autres apps que vous créerez :
+    'users',
+    'catalog',
+    'reviews',
+    'tokens',
+    'notifications',
+    'kpi',
+    'audit',
+    'dashboards',
+    'plugins',
 ]
+
+# REST Framework configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
+# SimpleJWT configuration
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+}
+
+# Spectacular (OpenAPI)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'RedTeamCN API',
+    'DESCRIPTION': 'Plateforme de design system',
+    'VERSION': '1.0.0',
+}
+
+# Allauth
+SITE_ID = 1
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -112,15 +161,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Authentication
-# AUTH_USER_MODEL = 'redteamcnadmin.User'
-# ACCOUNT_SIGNUP_FIELDS = {
-#     'email': {'required': True},
-#     'password1': {'required': True},
-# } 
-# ACCOUNT_LOGIN_METHODS = ['email']  
-# ACCOUNT_EMAIL_REQUIRED = True  
-# ACCOUNT_USERNAME_REQUIRED = False 
 
 
 REST_FRAMEWORK = {
