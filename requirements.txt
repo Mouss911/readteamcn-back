@@ -13,7 +13,7 @@ django-choices==1.6.0
 channels==4.1.0
 celery==5.4.0
 redis==5.1.0
-psycopg2-binary==2.9.9
+psycopg2-binary==2.9.11
 python-decouple==3.8
 sentry-sdk==2.4.0
 drf-yasg==1.21.7
