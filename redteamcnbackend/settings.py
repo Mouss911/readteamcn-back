@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',  # Pour allauth
-    'rest_framework',
 
     # Third party
     'rest_framework',
@@ -54,9 +53,10 @@ INSTALLED_APPS = [
     'axes',
     'corsheaders',
     'anymail',
-    'filter',
+    # 'filter',
     'channels',
     'celery',
+    'django_filters',
 
     # ajoutez ici les autres apps que vous créerez :
     'users',
@@ -73,6 +73,12 @@ INSTALLED_APPS = [
 # SITE_ID pour allauth
 SITE_ID = 1
 
+# si vous voulez un fallback pendant le dev (optionnel), décommentez la ligne suivante :
+# SECRET_KEY = config('SECRET_KEY', default='dev-change-me')
+
+# Indiquer le modèle utilisateur personnalisé
+AUTH_USER_MODEL = 'users.User'
+
 # REST Framework
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -84,6 +90,7 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
 }
 
 # SimpleJWT
@@ -119,9 +126,10 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    #'allauth.account.middleware.AccountMiddleware',  #
+    'allauth.account.middleware.AccountMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'redteamcnbackend.urls'
@@ -203,3 +211,9 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',  # Sécurité django-axes
+    'django.contrib.auth.backends.ModelBackend',  # Auth standard Django
+]
+
