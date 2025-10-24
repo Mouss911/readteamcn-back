@@ -8,6 +8,12 @@ class User(AbstractUser):
     is_active = models.BooleanField(default=True)
     last_login = models.DateTimeField(null=True, blank=True)
     
+    # ✅ Nouveau champ pour Platform Admin
+    is_platform_admin = models.BooleanField(
+        default=False,
+        help_text="Désigne si l'utilisateur est un admin de la plateforme (accès global)"
+    )
+    
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']
     
@@ -33,6 +39,7 @@ class Membership(models.Model):
         ('admin', 'Admin'),
         ('coach', 'Coach'),
         ('developer', 'Developer'),
+        ('viewer', 'Viewer'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
