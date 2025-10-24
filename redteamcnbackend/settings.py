@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'django_otp',
+    'django_otp.plugins.otp_totp',
     'axes',
     'corsheaders',
     'anymail',
@@ -70,11 +71,6 @@ INSTALLED_APPS = [
     'plugins',
 ]
 
-# SITE_ID pour allauth
-SITE_ID = 1
-
-# si vous voulez un fallback pendant le dev (optionnel), décommentez la ligne suivante :
-# SECRET_KEY = config('SECRET_KEY', default='dev-change-me')
 
 # Indiquer le modèle utilisateur personnalisé
 AUTH_USER_MODEL = 'users.User'
@@ -111,6 +107,16 @@ SPECTACULAR_SETTINGS = {
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 10 
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+
+
+# 2FA et Axes
+OTP_TOTP_ISSUER = 'RedTeamCN'
+AXES_FAILURE_LIMIT = 10
+AXES_COOLOFF_TIME = timedelta(minutes=5)
+AXES_LOCKOUT_PARAMETERS = ['ip_address', 'username']
+
 
 # CORS
 CORS_ALLOWED_ORIGINS = [
@@ -127,6 +133,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'axes.middleware.AxesMiddleware',
@@ -181,15 +188,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [],
-}
-
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -215,5 +213,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',  # Sécurité django-axes
     'django.contrib.auth.backends.ModelBackend',  # Auth standard Django
+    'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
