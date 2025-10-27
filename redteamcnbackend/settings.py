@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'allauth',
     'allauth.account',
@@ -47,22 +48,6 @@ INSTALLED_APPS = [
 # SITE_ID pour allauth
 SITE_ID = 1
 
-# si vous voulez un fallback pendant le dev (optionnel), décommentez la ligne suivante :
-# SECRET_KEY = config('SECRET_KEY', default='dev-change-me')
-
-# Indiquer le modèle utilisateur personnalisé
-AUTH_USER_MODEL = 'users.User'
-
-# REST Framework
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-}
 
 
 # ✅ Logging (optionnel mais recommandé)
@@ -88,33 +73,11 @@ LOGGING = {
 }
 
 
-
-# SimpleJWT
-from datetime import timedelta
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-}
-
-# Spectacular (OpenAPI)
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'RedTeamCN API',
-    'DESCRIPTION': 'Plateforme de design system',
-    'VERSION': '1.0.0',
-    'SERVE_INCLUDE_SCHEMA': False,
-    'COMPONENT_SPLIT_REQUEST': True,
-}
-
 # Allauth
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 
-# CORS
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
 
 # Middleware
 MIDDLEWARE = [
@@ -185,5 +148,43 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTHENTICATION_BACKENDS = [
     'axes.backends.AxesStandaloneBackend',  # Sécurité django-axes
     'django.contrib.auth.backends.ModelBackend',  # Auth standard Django
+]
+
+AUTH_USER_MODEL = 'users.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.AllowAny', 
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'BLACKLIST_AFTER_ROTATION': True,
+    'TOKEN_BLACKLIST_ENABLED': True,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'RedTeamCN API',
+    'DESCRIPTION': 'Plateforme de design system',
+    'VERSION': '1.0.0',
+    'SERVE_PERMISSIONS': ('rest_framework.permissions.AllowAny',),
+}
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000", 
 ]
 

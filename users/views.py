@@ -70,7 +70,7 @@ def login(request):
             status=status.HTTP_403_FORBIDDEN
         )
 
-    # ✅ Mise à jour last_login
+    #  Mise à jour last_login
     user.last_login = timezone.now()
     user.save(update_fields=['last_login'])
 
@@ -170,3 +170,21 @@ def delete_user(request, user_id):
     return Response({
         'message': f'Utilisateur {email} supprimé avec succès'
     }, status=status.HTTP_200_OK)
+
+    return Response(UserSerializer(request.user).data)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout(request):
+    try:
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        token = RefreshToken(refresh_token)
+        token.blacklist()  # Ajoute le refresh token à la liste noire
+        return Response({'message': 'Successfully logged out'}, status=status.HTTP_205_RESET_CONTENT)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
