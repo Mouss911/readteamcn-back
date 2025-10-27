@@ -52,3 +52,4 @@ urllib3==2.5.0
 vine==5.1.0
 wcwidth==0.2.14
 wheel==0.45.1
+dj-database-url==3.0.0
