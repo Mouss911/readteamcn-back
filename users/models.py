@@ -39,7 +39,6 @@ class Membership(models.Model):
         ('admin', 'Admin'),
         ('coach', 'Coach'),
         ('developer', 'Developer'),
-        ('viewer', 'Viewer'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)

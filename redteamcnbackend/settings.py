@@ -60,15 +60,31 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 }
-SPECTACULAR_SETTINGS = {
-    'TITLE': 'RedTeamCN API',
-    'DESCRIPTION': 'Plateforme de design system',
-    'VERSION': '1.0.0',
-    # PERMETTRE SWAGGER SANS AUTH
-    'AUTHENTICATION_WHITELIST': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
+
+
+# ✅ Logging (optionnel mais recommandé)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'users': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
 }
+
+
 
 # SimpleJWT
 from datetime import timedelta
@@ -82,6 +98,8 @@ SPECTACULAR_SETTINGS = {
     'TITLE': 'RedTeamCN API',
     'DESCRIPTION': 'Plateforme de design system',
     'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
 }
 
 # Allauth
