@@ -20,3 +20,30 @@ def list_components(request):
     components = Component.objects.all()
     serializer = ComponentSerializer(components, many=True)
     return Response(serializer.data)
+
+# Modification d'un component
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_component(request, pk):
+    try:
+        component = Component.objects.get(pk=pk, created_by=request.user)
+    except Component.DoesNotExist:
+        return Response({'error': 'Component not found or not authorized'}, status=status.HTTP_404_NOT_FOUND)
+    
+    serializer = ComponentSerializer(component, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Suppression d'un component
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_component(request, pk):
+    try:
+        component = Component.objects.get(pk=pk, created_by=request.user)
+    except Component.DoesNotExist:
+        return Response({'error': 'Component not found or not authorized'}, status=status.HTTP_404_NOT_FOUND)
+    
+    component.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)
