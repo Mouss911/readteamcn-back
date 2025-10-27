@@ -10,20 +10,24 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'is_active', 'last_login']
+        fields = ['id', 'email', 'username', 'is_active', 'last_login','first_name', 'last_name']
         read_only_fields = ['id', 'is_active', 'last_login']
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     organization_name = serializers.CharField(max_length=255, required=False)
+    first_name = serializers.CharField(max_length=150, required=False)
+    last_name = serializers.CharField(max_length=150, required=False)
     
     class Meta:
         model = User
-        fields = ['email', 'username', 'password', 'organization_name']
+        fields = ['email', 'username', 'password', 'organization_name', 'first_name', 'last_name']
     
     def create(self, validated_data):
         organization_name = validated_data.pop('organization_name', None)
         password = validated_data.pop('password')
+        first_name=validated_data.get('first_name', ''),
+        last_name=validated_data.get('last_name', '')
         
         user = User.objects.create_user(**validated_data)
         user.set_password(password)
