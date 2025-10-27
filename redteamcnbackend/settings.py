@@ -114,7 +114,11 @@ TEMPLATES = [
 WSGI_APPLICATION = 'redteamcnbackend.wsgi.application'
 
 DATABASES = {
-    'default': dj_database_url.parse(config('DATABASE'))
+    'default': dj_database_url.config(
+        default=f'sqlite:///{BASE_DIR}/db.sqlite3',
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
