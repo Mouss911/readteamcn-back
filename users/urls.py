@@ -9,9 +9,11 @@ urlpatterns = [
     path('auth/me/', views.me, name='me'),    
     # Endpoints Admin (Platform Admin uniquement)
     path('admin/users/', views.list_all_users, name='admin-list-users'),
+    path('admin/users/<int:user_id>/', views.change_user_role, name='admin-change-role'),
+    path('admin/users/<int:user_id>/toggle-active/', views.toggle_user_active, name='admin-toggle-active'),
     path('admin/users/<int:user_id>/delete/', views.delete_user, name='admin-delete-user'),
-    path('admin/promote/', views.promote_to_platform_admin, name='admin-promote'),
 
     path('auth/logout/', views.logout, name='logout'),
-    path('users/', views.list_users, name='list_users'),
+    
+    path('users/', views.list_users, name='list-users'),
 ]

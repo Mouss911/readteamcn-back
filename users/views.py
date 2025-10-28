@@ -8,8 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 import logging
 
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
-from .permissions import IsPlatformAdmin
+from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, ChangeRoleSerializer
+from .permissions import IsAdmin 
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -19,7 +19,7 @@ User = get_user_model()
 @permission_classes([AllowAny])
 @csrf_exempt
 def register(request):
-    """Inscription d'un nouvel utilisateur"""
+    """Inscription d'un nouvel utilisateur (toujours Developer)"""
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
@@ -70,7 +70,7 @@ def login(request):
             status=status.HTTP_403_FORBIDDEN
         )
 
-    #  Mise à jour last_login
+    # Mise à jour last_login
     user.last_login = timezone.now()
     user.save(update_fields=['last_login'])
 
@@ -93,21 +93,62 @@ def me(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsPlatformAdmin])
-def promote_to_platform_admin(request):
-    """
-    Endpoint ADMIN : Promouvoir un user en Platform Admin
-    
-    Body: {"user_id": 123}
-    """
-    user_id = request.data.get('user_id')
-    
-    if not user_id:
+@permission_classes([IsAuthenticated])
+def logout(request):
+    """Déconnexion (blacklist le refresh token)"""
+    try:
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response(
+                {'error': 'Refresh token is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        token = RefreshToken(refresh_token)
+        token.blacklist()
+        
+        logger.info(f"User logged out: {request.user.email}")
+        
         return Response(
-            {'detail': 'user_id requis'},
+            {'message': 'Successfully logged out'}, 
+            status=status.HTTP_205_RESET_CONTENT
+        )
+    except Exception as e:
+        logger.error(f"Logout error: {str(e)}")
+        return Response(
+            {'error': str(e)}, 
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+# ============================================
+# SECTION ADMIN (UN SEUL ADMIN)
+# ============================================
+
+@api_view(['GET'])
+@permission_classes([IsAdmin])
+def list_all_users(request):
+    """
+    Liste TOUS les users (Admin uniquement)
+    """
+    users = User.objects.all().order_by('-date_joined')
+    serializer = UserSerializer(users, many=True)
     
+    return Response({
+        'count': users.count(),
+        'users': serializer.data
+    })
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAdmin])
+def change_user_role(request, user_id):
+    """
+    Changer le rôle d'un user (Coach ou Developer)
+    L'Admin ne peut PAS créer d'autres Admins
+    
+    Body: {"role": "coach"}
+    """
     try:
         user = User.objects.get(id=user_id)
     except User.DoesNotExist:
@@ -116,22 +157,86 @@ def promote_to_platform_admin(request):
             status=status.HTTP_404_NOT_FOUND
         )
     
-    user.is_platform_admin = True
-    user.save(update_fields=['is_platform_admin'])
+    # Empêcher de modifier le rôle de l'Admin unique
+    if user.is_admin():
+        return Response(
+            {'detail': 'Impossible de modifier le rôle de l\'Admin'},
+            status=status.HTTP_403_FORBIDDEN
+        )
     
-    logger.info(f"User {user.email} promoted to Platform Admin by {request.user.email}")
+    serializer = ChangeRoleSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    new_role = serializer.validated_data['role']
+    old_role = user.role
+    
+    user.role = new_role
+    user.save(update_fields=['role'])
+    
+    logger.info(f"User {user.email} role changed from {old_role} to {new_role} by {request.user.email}")
     
     return Response({
-        'message': f'{user.email} est maintenant Platform Admin',
+        'message': f'Rôle de {user.email} changé de {old_role} à {new_role}',
+        'user': UserSerializer(user).data
+    })
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAdmin])
+def toggle_user_active(request, user_id):
+    """
+    Activer/Désactiver un user (Admin uniquement)
+    
+    Body: {"is_active": false}
+    """
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response(
+            {'detail': 'Utilisateur introuvable'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Empêcher de se désactiver soi-même
+    if user == request.user:
+        return Response(
+            {'detail': 'Vous ne pouvez pas vous désactiver vous-même'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Empêcher de désactiver l'Admin
+    if user.is_admin():
+        return Response(
+            {'detail': 'Impossible de désactiver l\'Admin'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    is_active = request.data.get('is_active')
+    
+    if is_active is None:
+        return Response(
+            {'detail': 'is_active requis (true/false)'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    user.is_active = is_active
+    user.save(update_fields=['is_active'])
+    
+    action = "activé" if is_active else "désactivé"
+    logger.warning(f"User {user.email} {action} by {request.user.email}")
+    
+    return Response({
+        'message': f'Utilisateur {user.email} {action}',
         'user': UserSerializer(user).data
     })
 
 
 @api_view(['DELETE'])
-@permission_classes([IsPlatformAdmin])
+@permission_classes([IsAdmin])
 def delete_user(request, user_id):
     """
-    Endpoint ADMIN : Supprimer un user
+    Supprimer définitivement un user (Admin uniquement)
     """
     try:
         user = User.objects.get(id=user_id)
@@ -148,37 +253,33 @@ def delete_user(request, user_id):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    # Empêcher de supprimer l'Admin
+    if user.is_admin():
+        return Response(
+            {'detail': 'Impossible de supprimer l\'Admin'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
     email = user.email
     user.delete()
     
-    logger.warning(f"User {email} deleted by {request.user.email}")
+    logger.warning(f"User {email} DELETED by {request.user.email}")
     
     return Response({
-        'message': f'Utilisateur {email} supprimé avec succès'
+        'message': f'Utilisateur {email} supprimé définitivement'
     }, status=status.HTTP_200_OK)
 
-    return Response(UserSerializer(request.user).data)
 
+# ============================================
+# SECTION PUBLIQUE
+# ============================================
 
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def logout(request):
-    try:
-        refresh_token = request.data.get('refresh')
-        if not refresh_token:
-            return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        token = RefreshToken(refresh_token)
-        token.blacklist()  # Ajoute le refresh token à la liste noire
-        return Response({'message': 'Successfully logged out'}, status=status.HTTP_205_RESET_CONTENT)
-    except Exception as e:
-        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-# liste des users
 @api_view(['GET'])
-@permission_classes([IsAdminUser])
+@permission_classes([IsAuthenticated])
 def list_users(request):
-    users = User.objects.all()
+    """
+    Liste basique des users actifs (pour tous les users authentifiés)
+    """
+    users = User.objects.filter(is_active=True).order_by('-date_joined')
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
