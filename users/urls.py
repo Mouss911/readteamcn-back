@@ -13,4 +13,5 @@ urlpatterns = [
     path('admin/promote/', views.promote_to_platform_admin, name='admin-promote'),
 
     path('auth/logout/', views.logout, name='logout'),
+    path('users/', views.list_users, name='list_users'),
 ]
