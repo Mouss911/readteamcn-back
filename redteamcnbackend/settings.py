@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'django_filters',
     'channels',
     'celery',
+    # Mes applications personnalisées
     'users',
     'catalog',
     'reviews',
