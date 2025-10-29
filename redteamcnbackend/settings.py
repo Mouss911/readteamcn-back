@@ -92,6 +92,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 ROOT_URLCONF = 'redteamcnbackend.urls'
@@ -116,7 +117,7 @@ WSGI_APPLICATION = 'redteamcnbackend.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=f'sqlite:///{BASE_DIR}/db.sqlite3',
+        default=config('DATABASE'),
         conn_max_age=600,
         conn_health_checks=True,
     )

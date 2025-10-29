@@ -13,7 +13,6 @@ from .serializers import (
     RegisterSerializer, 
     LoginSerializer, 
     UserSerializer, 
-    MembershipSerializer
 )
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
