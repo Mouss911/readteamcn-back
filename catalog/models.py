@@ -10,6 +10,23 @@ class Component(models.Model):
         ('CARD', 'Card'),
         ('INPUT', 'Input'),
         ('MODAL', 'Modal'),
+        ('ACCORDION', 'Accordion'),
+        ('SIDEBAR', 'Sidebar'),
+        ('NAVBAR', 'Navbar'),
+        ('DROPDOWN', 'Dropdown'),
+        ('CAROUSEL', 'Carousel'),
+        ('CHART', 'Chart'),
+        ('TABLE', 'Table'),
+        ('TOAST', 'Toast'),
+        ('TOGGLE', 'Toggle'),
+        ('TEXTAREA', 'Textarea'),
+        ('SELECT', 'Select'),
+        ('ALERT', 'Alert'),
+        ('BADGE', 'Badge'),
+        ('BREADCRUMB', 'Breadcrumb'),
+        ('FORM', 'Form'),
+        ('PAGINATION', 'Pagination'),
+        ('PROGRESS', 'Progress'),
     ])
     code = models.TextField()  # HTML/CSS/JS du composant
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='components')
