@@ -6,5 +6,5 @@ class ComponentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Component
-        fields = ['id', 'name', 'description', 'category', 'code', 'created_by', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'description', 'category', 'code', 'created_by', 'status', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_by', 'created_at', 'updated_at']
