@@ -121,7 +121,7 @@ Les emails de reset de mot de passe s’affichent dans la **console**.
 ```bash
 # 1. Cloner
 git clone <repo>
-cd redteamcn
+cd readteamcn-back
 
 # 2. Environnement
 python -m venv venv
