@@ -26,6 +26,11 @@ def list_components(request):
     # Filtrer par catégorie si demandé
     if category:
         components = components.filter(category=category.upper())
+    
+    # RECHERCHE PAR NOM
+    search = request.query_params.get('search')
+    if search:
+        components = components.filter(name__icontains=search)
 
     serializer = ComponentSerializer(components, many=True)
     return Response(serializer.data)
@@ -102,3 +107,16 @@ def review_component(request, component_id):
         'message': f'Composant {action == "approve" and "validé" or "rejeté"}',
         'status': component.status
     })
+
+# Permettre à l'utilisateur de voir tous ses composants
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_components(request):
+    # Tous les composants du user connecté
+    components = Component.objects.filter(created_by=request.user)
+    
+    # Optionnel : trier par date
+    components = components.order_by('-created_at')
+
+    serializer = ComponentSerializer(components, many=True)
+    return Response(serializer.data)
