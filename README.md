@@ -16,7 +16,7 @@ Une **plateforme moderne de Design System** permettant de **créer, soumettre, v
 - **Mot de passe oublié** (reset par email)
 - **Gestion des utilisateurs** (superuser only)
 - **API REST complète + Swagger**
-- **Prêt pour le frontend** (React, Vue, etc.)
+- **Prêt pour le frontend** (React Js)
 
 ---
 
@@ -27,8 +27,8 @@ Une **plateforme moderne de Design System** permettant de **créer, soumettre, v
 | **`users`** | Gestion des utilisateurs, authentification, rôles | `User` (custom) | `/auth/register/`, `/auth/login/`, `/auth/me/`, `/admin/users/<id>/` |
 | **`catalog`** | Gestion des composants UI + validation | `Component` | `/components/`, `/components/create/`, `/components/my/`, `/components/submit/<id>/`, `/components/review/<id>/` |
 | **`reviews`** | Système de notation et commentaires | `Review` | `/components/<id>/reviews/`, `/reviews/<id>/` |
+| **`notifications`** | Notifications (reviews + validation) | `Notification` | `/notifications/`, `/notifications/<id>/read/` |
 | **`tokens`** | (Réservé) Gestion avancée des tokens | — | — |
-| **`notifications`** | (À venir) Notifications en temps réel | — | — |
 | **`kpi`** | (À venir) Statistiques et métriques | — | — |
 | **`audit`** | (À venir) Journal d'activité | — | — |
 | **`dashboards`** | (À venir) Tableaux de bord | — | — |
