@@ -13,6 +13,7 @@ Une **plateforme moderne de Design System** permettant de **créer, soumettre, v
 - **Système de reviews** (notes + commentaires)
 - **Recherche & filtres** (nom, catégorie)
 - **Mes composants** (Developer voit tous ses statuts)
+- **Notifications** (soumission, validation, rejet)
 - **Mot de passe oublié** (reset par email)
 - **Gestion des utilisateurs** (superuser only)
 - **API REST complète + Swagger**
@@ -83,6 +84,19 @@ Une **plateforme moderne de Design System** permettant de **créer, soumettre, v
 
 ---
 
+### `notifications` – Notifications en temps réel
+
+- **Modèle** : `Notification`
+- **Événements** :
+  - `review_created` → propriétaire du composant
+  - `component_submitted` → tous les Coachs
+  - `component_reviewed` → Developer (validé/rejeté)
+- **Endpoints** :
+  - `GET /api/notifications/` → Lister les siennes
+  - `PATCH /api/notifications/<id>/read/` → Marquer comme lue
+
+---
+
 ## Workflow de Validation
 
 ```mermaid
@@ -96,6 +110,8 @@ graph TD
     F -->|reject| H[rejected]
     G --> I[Visible sur /components/]
     H --> J[Invisible publiquement]
+    C --> K[Notifie Coachs]
+    E --> L[Notifie Developer]
 ```
 
 ---
