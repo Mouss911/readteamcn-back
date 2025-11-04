@@ -1,9 +1,13 @@
 from rest_framework import status
+from django.contrib.auth import get_user_model
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from .models import Component
 from .serializers import ComponentSerializer
+from notifications.models import Notification
+
+User = get_user_model()
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -77,6 +81,17 @@ def submit_for_review(request, component_id):
     component.status = 'pending'
     component.save()
 
+    # NOTIFIER LES COACHS
+    coaches = User.objects.filter(role='coach')
+    for coach in coaches:
+        Notification.objects.create(
+            recipient=coach,
+            actor=request.user,
+            verb='component_submitted',
+            target=component,
+            message=f"{request.user.email} a soumis '{component.name}' pour validation"
+        )
+
     return Response({'message': 'Soumis pour validation'})
 
 # Validation ou rejet d'un component par un Coach
@@ -102,6 +117,16 @@ def review_component(request, component_id):
 
     component.status = 'approved' if action == 'approve' else 'rejected'
     component.save()
+
+    # NOTIFIER LE DEVELOPER
+    Notification.objects.create(
+        recipient=component.created_by,
+        actor=request.user,
+        verb='component_reviewed',
+        target=component,
+        message=f"Votre composant '{component.name}' a été {action == 'approve' and 'validé' or 'rejeté'}"
+        + (f" : {reason}" if reason else "")
+    )
 
     return Response({
         'message': f'Composant {action == "approve" and "validé" or "rejeté"}',
