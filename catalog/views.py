@@ -81,11 +81,13 @@ def submit_for_review(request, component_id):
     component.status = 'pending'
     component.save()
 
-    # NOTIFIER LES COACHS
+    # NOTIFIER LES COACHS ET ADMINS
     coaches = User.objects.filter(role='coach')
-    for coach in coaches:
+    admins = User.objects.filter(role='admin')
+
+    for user in list(coaches) + list(admins):
         Notification.objects.create(
-            recipient=coach,
+            recipient=user,
             actor=request.user,
             verb='component_submitted',
             target=component,
@@ -118,6 +120,8 @@ def review_component(request, component_id):
     component.status = 'approved' if action == 'approve' else 'rejected'
     component.save()
 
+    admins = User.objects.filter(role='admin')
+
     # NOTIFIER LE DEVELOPER
     Notification.objects.create(
         recipient=component.created_by,
@@ -127,6 +131,16 @@ def review_component(request, component_id):
         message=f"Votre composant '{component.name}' a été {action == 'approve' and 'validé' or 'rejeté'}"
         + (f" : {reason}" if reason else "")
     )
+
+    # Notifier l'Admin
+    for admin in admins:
+        Notification.objects.create(
+            recipient=admin,
+            actor=request.user,
+            verb='component_reviewed',
+            target=component,
+            message=f"{request.user.email} a {action == 'approve' and 'validé' or 'rejeté'} le composant '{component.name}'"
+        )
 
     return Response({
         'message': f'Composant {action == "approve" and "validé" or "rejeté"}',
