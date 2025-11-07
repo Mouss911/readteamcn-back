@@ -175,3 +175,13 @@ def coach_dashboard_stats(request):
         'rejected': Component.objects.filter(status='rejected').count(),
     }
     return Response(stats)
+
+# Liste des catégories de composants
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_categories(request):
+    categories = [
+        {'value': code, 'label': label}
+        for code, label in Component.CATEGORIES
+    ]
+    return Response(categories)

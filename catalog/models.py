@@ -3,6 +3,30 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class Component(models.Model):
+    CATEGORIES = [
+        ('BUTTON', 'Button'),
+        ('CARD', 'Card'),
+        ('INPUT', 'Input'),
+        ('MODAL', 'Modal'),
+        ('ACCORDION', 'Accordion'),
+        ('SIDEBAR', 'Sidebar'),
+        ('NAVBAR', 'Navbar'),
+        ('DROPDOWN', 'Dropdown'),
+        ('CAROUSEL', 'Carousel'),
+        ('CHART', 'Chart'),
+        ('TABLE', 'Table'),
+        ('TOAST', 'Toast'),
+        ('TOGGLE', 'Toggle'),
+        ('TEXTAREA', 'Textarea'),
+        ('SELECT', 'Select'),
+        ('ALERT', 'Alert'),
+        ('BADGE', 'Badge'),
+        ('BREADCRUMB', 'Breadcrumb'),
+        ('FORM', 'Form'),
+        ('PAGINATION', 'Pagination'),
+        ('PROGRESS', 'Progress'),
+    ]
+    
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     category = models.CharField(max_length=50, choices=[
