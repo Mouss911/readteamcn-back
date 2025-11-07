@@ -10,5 +10,6 @@ urlpatterns = [
     path('components/review/<int:component_id>/', views.review_component, name='review_component'),
     path('components/my/', views.my_components, name='my_components'),
     path('coach/stats/', views.coach_dashboard_stats, name='coach-dashboard-stats'),
+    path('coach/pending/', views.coach_pending_components, name='coach_pending'),
     path('categories/', views.list_categories, name='list_categories'),
 ]
