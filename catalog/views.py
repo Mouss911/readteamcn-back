@@ -175,6 +175,16 @@ def coach_dashboard_stats(request):
         'rejected': Component.objects.filter(status='rejected').count(),
     }
     return Response(stats)
+# Composants en attente pour les Coachs
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def coach_pending_components(request):
+    if request.user.role != 'coach':
+        return Response({'error': 'Accès refusé'}, status=403)
+
+    components = Component.objects.filter(status='pending')
+    serializer = ComponentSerializer(components, many=True)
+    return Response(serializer.data)
 
 # Liste des catégories de composants
 @api_view(['GET'])
