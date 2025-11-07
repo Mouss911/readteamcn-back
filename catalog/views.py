@@ -81,15 +81,18 @@ def submit_for_review(request, component_id):
     component.status = 'pending'
     component.save()
 
-    # NOTIFIER LES COACHS
+    # NOTIFIER LES COACHS ET ADMINS
+    actor_name = request.user.get_full_name() or request.user.username
     coaches = User.objects.filter(role='coach')
-    for coach in coaches:
+    admins = User.objects.filter(role='admin')
+
+    for user in list(coaches) + list(admins):
         Notification.objects.create(
-            recipient=coach,
+            recipient=user,
             actor=request.user,
             verb='component_submitted',
             target=component,
-            message=f"{request.user.email} a soumis '{component.name}' pour validation"
+            message=f"{actor_name} a soumis '{component.name}' pour validation"
         )
 
     return Response({'message': 'Soumis pour validation'})
@@ -118,6 +121,9 @@ def review_component(request, component_id):
     component.status = 'approved' if action == 'approve' else 'rejected'
     component.save()
 
+    actor_name = request.user.get_full_name() or request.user.username
+    admins = User.objects.filter(role='admin')
+
     # NOTIFIER LE DEVELOPER
     Notification.objects.create(
         recipient=component.created_by,
@@ -127,6 +133,16 @@ def review_component(request, component_id):
         message=f"Votre composant '{component.name}' a été {action == 'approve' and 'validé' or 'rejeté'}"
         + (f" : {reason}" if reason else "")
     )
+
+    # Notifier l'Admin
+    for admin in admins:
+        Notification.objects.create(
+            recipient=admin,
+            actor=request.user,
+            verb='component_reviewed',
+            target=component,
+            message=f"{actor_name} a {action == 'approve' and 'validé' or 'rejeté'} le composant '{component.name}'"
+        )
 
     return Response({
         'message': f'Composant {action == "approve" and "validé" or "rejeté"}',
@@ -145,3 +161,27 @@ def my_components(request):
 
     serializer = ComponentSerializer(components, many=True)
     return Response(serializer.data)
+
+# Statistiques pour le dashboard Coach
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def coach_dashboard_stats(request):
+    if request.user.role != 'coach':
+        return Response({'error': 'Access denied'}, status=403)
+
+    stats = {
+        'pending': Component.objects.filter(status='pending').count(),
+        'approved': Component.objects.filter(status='approved').count(),
+        'rejected': Component.objects.filter(status='rejected').count(),
+    }
+    return Response(stats)
+
+# Liste des catégories de composants
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def list_categories(request):
+    categories = [
+        {'value': code, 'label': label}
+        for code, label in Component.CATEGORIES
+    ]
+    return Response(categories)
