@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Organization, Membership
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from allauth.account.models import EmailConfirmation
@@ -8,41 +7,62 @@ from allauth.account.models import EmailConfirmation
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    """Serializer pour afficher les infos d'un user"""
+    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'is_active', 'last_login','first_name', 'last_name']
-        read_only_fields = ['id', 'is_active', 'last_login']
+        fields = [
+            'id', 'email', 'username', 
+            'role', 'role_display',
+            'is_active', 'last_login', 'date_joined',
+            'first_name', 'last_name',
+        ]
+        read_only_fields = ['id', 'is_active', 'last_login', 'date_joined']
+
 
 class RegisterSerializer(serializers.ModelSerializer):
+    """Serializer pour l'inscription"""
     password = serializers.CharField(write_only=True, min_length=8)
-    organization_name = serializers.CharField(max_length=255, required=False)
     first_name = serializers.CharField(max_length=150, required=False)
     last_name = serializers.CharField(max_length=150, required=False)
     
     class Meta:
         model = User
-        fields = ['email', 'username', 'password', 'organization_name', 'first_name', 'last_name']
+        fields = ['email', 'username', 'password', 'first_name', 'last_name']
     
     def create(self, validated_data):
-        organization_name = validated_data.pop('organization_name', None)
         password = validated_data.pop('password')
-        first_name=validated_data.get('first_name', ''),
-        last_name=validated_data.get('last_name', '')
         
-        user = User.objects.create_user(**validated_data)
-        user.set_password(password)
-        user.save()
-        
-        # Créer organisation si fournie
-        if organization_name:
-            org = Organization.objects.create(name=organization_name, domain=f"{user.username}.redteamcn.com")
-            Membership.objects.create(user=user, organization=org, role='admin')
+        # Par défaut, nouveau user = Developer
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            username=validated_data['username'],
+            password=password,
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+            role='developer'  # Toujours Developer à l'inscription
+        )
         
         return user
 
+
 class LoginSerializer(serializers.Serializer):
+    """Serializer pour le login"""
     email = serializers.EmailField()
-    password = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+
+
+class ChangeRoleSerializer(serializers.Serializer):
+    """Serializer pour changer le rôle d'un user (Admin only)"""
+    role = serializers.ChoiceField(
+        choices=[
+            ('coach', 'Coach'),
+            ('developer', 'Developer'),
+            # 'admin' n'est PAS dans les choix (un seul admin)
+        ]
+    )
+
 
 class VerifyEmailSerializer(serializers.Serializer):
     token = serializers.CharField()
@@ -57,9 +77,3 @@ class VerifyEmailSerializer(serializers.Serializer):
             raise serializers.ValidationError("Token invalide")
         return value
 
-class MembershipSerializer(serializers.ModelSerializer):
-    organization = serializers.StringRelatedField()
-    
-    class Meta:
-        model = Membership
-        fields = ['organization', 'role']
