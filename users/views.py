@@ -16,7 +16,6 @@ from .serializers import (
     RegisterSerializer, 
     LoginSerializer, 
     UserSerializer, 
-    MembershipSerializer
 )
 
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, ChangeRoleSerializer
