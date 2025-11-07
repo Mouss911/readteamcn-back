@@ -9,7 +9,9 @@ from django.utils import timezone
 import logging
 
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, ChangeRoleSerializer
-from .permissions import IsAdmin 
+from .permissions import IsAdmin
+from audit.utils import create_audit_log, get_client_ip, log_user_action
+
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
@@ -26,6 +28,16 @@ def register(request):
         refresh = RefreshToken.for_user(user)
         
         logger.info(f"New user registered: {user.email}")
+        
+        # ✅ Log d'audit
+        create_audit_log(
+            action='user_register',
+            user=user,
+            description=f"New user registered: {user.email}",
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            severity='info'
+        )
         
         return Response({
             'user': UserSerializer(user).data,
@@ -52,13 +64,33 @@ def login(request):
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         logger.warning(f"Login attempt with non-existent email: {email}")
+        
+        # ✅ Log d'échec de connexion (email inexistant)
+        create_audit_log(
+            action='login_failed',
+            description=f"Failed login attempt with non-existent email: {email}",
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            severity='warning'
+        )
+        
         return Response(
             {'detail': "Email ou mot de passe incorrect."}, 
             status=status.HTTP_401_UNAUTHORIZED
         )
+    
 
     if not user.check_password(password):
         logger.warning(f"Failed login attempt for: {email}")
+        # ✅ Log d'échec de connexion (mauvais password)
+        create_audit_log(
+            action='login_failed',
+            user=user,
+            description=f"Failed login attempt: wrong password for {email}",
+            ip_address=get_client_ip(request),
+            user_agent=request.META.get('HTTP_USER_AGENT', ''),
+            severity='warning'
+        )
         return Response(
             {'detail': "Email ou mot de passe incorrect."}, 
             status=status.HTTP_401_UNAUTHORIZED
@@ -77,6 +109,16 @@ def login(request):
     refresh = RefreshToken.for_user(user)
     
     logger.info(f"User logged in: {user.email}")
+    
+    # ✅ Log de connexion réussie
+    create_audit_log(
+        action='user_login',
+        user=user,
+        description=f"User {user.email} logged in successfully",
+        ip_address=get_client_ip(request),
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        severity='info'
+    )
     
     return Response({
         'access': str(refresh.access_token),
@@ -108,6 +150,14 @@ def logout(request):
         token.blacklist()
         
         logger.info(f"User logged out: {request.user.email}")
+        
+        # ✅ Log de déconnexion
+        log_user_action(
+            request=request,
+            action='user_logout',
+            description=f"User {request.user.email} logged out",
+            severity='info'
+        )
         
         return Response(
             {'message': 'Successfully logged out'}, 
@@ -175,6 +225,18 @@ def change_user_role(request, user_id):
     user.save(update_fields=['role'])
     
     logger.info(f"User {user.email} role changed from {old_role} to {new_role} by {request.user.email}")
+    # ✅ Log de changement de rôle
+    log_user_action(
+        request=request,
+        action='role_changed',
+        target_user=user,
+        description=f"Role changed from {old_role} to {new_role} for {user.email}",
+        changes={
+            'old_role': old_role,
+            'new_role': new_role
+        },
+        severity='info'
+    )
     
     return Response({
         'message': f'Rôle de {user.email} changé de {old_role} à {new_role}',
@@ -220,11 +282,27 @@ def toggle_user_active(request, user_id):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    # Sauvegarder l'ancien statut pour le log
+    old_status = user.is_active
+    
     user.is_active = is_active
     user.save(update_fields=['is_active'])
     
     action = "activé" if is_active else "désactivé"
     logger.warning(f"User {user.email} {action} by {request.user.email}")
+    
+    # ✅ Log d'activation/désactivation - CORRECTION: old_status est maintenant défini
+    log_user_action(
+        request=request,
+        action='user_activated' if is_active else 'user_deactivated',
+        target_user=user,
+        description=f"User {user.email} {action} by {request.user.email}",
+        changes={
+            'old_status': old_status,  # ← Maintenant défini
+            'new_status': is_active
+        },
+        severity='warning'
+    )
     
     return Response({
         'message': f'Utilisateur {user.email} {action}',
@@ -261,14 +339,31 @@ def delete_user(request, user_id):
         )
     
     email = user.email
+    username = user.username
+    
+    # Sauvegarder les données de l'utilisateur avant suppression pour le log
+    user_data = {
+        'email': email,
+        'username': username,
+        'role': user.role
+    }
+    
     user.delete()
     
     logger.warning(f"User {email} DELETED by {request.user.email}")
     
+    # ✅ Log de suppression - CORRECTION: user_data est maintenant défini
+    log_user_action(
+        request=request,
+        action='user_deleted',
+        description=f"User {email} permanently deleted by {request.user.email}",
+        changes={'deleted_user': user_data},  # ← Maintenant défini
+        severity='critical'
+    )
+    
     return Response({
         'message': f'Utilisateur {email} supprimé définitivement'
     }, status=status.HTTP_200_OK)
-
 
 # ============================================
 # SECTION PUBLIQUE
