@@ -161,3 +161,17 @@ def my_components(request):
 
     serializer = ComponentSerializer(components, many=True)
     return Response(serializer.data)
+
+# Statistiques pour le dashboard Coach
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def coach_dashboard_stats(request):
+    if request.user.role != 'coach':
+        return Response({'error': 'Access denied'}, status=403)
+
+    stats = {
+        'pending': Component.objects.filter(status='pending').count(),
+        'approved': Component.objects.filter(status='approved').count(),
+        'rejected': Component.objects.filter(status='rejected').count(),
+    }
+    return Response(stats)

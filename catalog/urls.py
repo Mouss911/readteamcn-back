@@ -9,4 +9,5 @@ urlpatterns = [
     path('components/submit/<int:component_id>/', views.submit_for_review, name='submit_for_review'),
     path('components/review/<int:component_id>/', views.review_component, name='review_component'),
     path('components/my/', views.my_components, name='my_components'),
+    path('coach/stats/', views.coach_dashboard_stats, name='coach-dashboard-stats'),
 ]
