@@ -14,6 +14,9 @@ urlpatterns = [
     path('admin/users/<int:user_id>/delete/', views.delete_user, name='admin-delete-user'),
 
     path('auth/logout/', views.logout, name='logout'),
-    
-    path('users/', views.list_users, name='list-users'),
+
+
+    path('users/', views.list_users, name='list_users'),
+    path('auth/password/reset/', views.request_password_reset, name='request_password_reset'),
+    path('auth/password/reset/<str:uidb64>/<str:token>/', views.reset_password, name='reset_password'),
 ]

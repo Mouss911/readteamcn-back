@@ -7,6 +7,17 @@ from django.contrib.auth import get_user_model
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 import logging
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.urls import reverse
+from .serializers import (
+    RegisterSerializer, 
+    LoginSerializer, 
+    UserSerializer, 
+    MembershipSerializer
+)
 
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, ChangeRoleSerializer
 from .permissions import IsAdmin
@@ -15,6 +26,7 @@ from audit.utils import create_audit_log, get_client_ip, log_user_action
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+token_generator = PasswordResetTokenGenerator()
 
 
 @api_view(['POST'])
@@ -378,3 +390,61 @@ def list_users(request):
     users = User.objects.filter(is_active=True).order_by('-date_joined')
     serializer = UserSerializer(users, many=True)
     return Response(serializer.data)
+
+# gestion de mot de passe oubliée
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def request_password_reset(request):
+    email = request.data.get('email')
+    if not email:
+        return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        user = User.objects.get(email=email)
+    except User.DoesNotExist:
+        # Ne pas révéler si l'email existe ou non (sécurité)
+        return Response({'message': 'If the email exists, a reset link has been sent.'}, status=status.HTTP_200_OK)
+
+    # Générer token et UID
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = token_generator.make_token(user)
+
+    # Construire le lien de réinitialisation
+    reset_url = request.build_absolute_uri(
+        reverse('reset_password', kwargs={'uidb64': uid, 'token': token})
+    )
+
+    # Envoyer l'email
+    send_mail(
+        subject='Réinitialisation de votre mot de passe',
+        message=f'Cliquez sur ce lien pour réinitialiser votre mot de passe : {reset_url}',
+        from_email='no-reply@redteamcn.com',
+        recipient_list=[user.email],
+        fail_silently=False,
+    )
+
+    return Response({'message': 'If the email exists, a reset link has been sent.'}, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def reset_password(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        return Response({'error': 'Invalid reset link'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not token_generator.check_token(user, token):
+        return Response({'error': 'Invalid or expired token'}, status=status.HTTP_400_BAD_REQUEST)
+
+    new_password = request.data.get('new_password')
+    confirm_password = request.data.get('confirm_password')
+
+    if not new_password or new_password != confirm_password:
+        return Response({'error': 'Passwords do not match or are missing'}, status=status.HTTP_400_BAD_REQUEST)
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response({'message': 'Password has been reset successfully'}, status=status.HTTP_200_OK)
