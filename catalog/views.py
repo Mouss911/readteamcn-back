@@ -82,6 +82,7 @@ def submit_for_review(request, component_id):
     component.save()
 
     # NOTIFIER LES COACHS ET ADMINS
+    actor_name = request.user.get_full_name() or request.user.username
     coaches = User.objects.filter(role='coach')
     admins = User.objects.filter(role='admin')
 
@@ -91,7 +92,7 @@ def submit_for_review(request, component_id):
             actor=request.user,
             verb='component_submitted',
             target=component,
-            message=f"{request.user.email} a soumis '{component.name}' pour validation"
+            message=f"{actor_name} a soumis '{component.name}' pour validation"
         )
 
     return Response({'message': 'Soumis pour validation'})
@@ -120,6 +121,7 @@ def review_component(request, component_id):
     component.status = 'approved' if action == 'approve' else 'rejected'
     component.save()
 
+    actor_name = request.user.get_full_name() or request.user.username
     admins = User.objects.filter(role='admin')
 
     # NOTIFIER LE DEVELOPER
@@ -139,7 +141,7 @@ def review_component(request, component_id):
             actor=request.user,
             verb='component_reviewed',
             target=component,
-            message=f"{request.user.email} a {action == 'approve' and 'validé' or 'rejeté'} le composant '{component.name}'"
+            message=f"{actor_name} a {action == 'approve' and 'validé' or 'rejeté'} le composant '{component.name}'"
         )
 
     return Response({
